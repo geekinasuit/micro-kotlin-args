@@ -21,8 +21,7 @@ class ArgsParser(vararg args: String, val binaryName: String = "binary") {
     return Opt(this, *names, help = help, env = env, xform = xform).also { opts.add(it) }
   }
   fun help() = "Usage '$binaryName <options and flags> ...'\n" + opts.joinToString("\n") {
-    o ->
-    "  ${o.names.joinToString()}${o.help?.let {"\n    ${o.help}"} ?: ""}"
+    o ->"  ${o.names.joinToString()}${o.help?.let {"\n    ${o.help}"} ?: ""}"
   }
   open class Opt<T : Any>(
     val parser: ArgsParser,
