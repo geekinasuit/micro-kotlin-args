@@ -1,0 +1,58 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
+load("//:release.bzl", "deployment_jar", "maven_pom", "sources_jar")
+
+load(
+    "//:versions.bzl",
+    "JAVA_LANGUAGE_LEVEL",
+    "KOTLIN_LANGUAGE_LEVEL",
+    "LIBRARY_ARTIFACT_ID",
+    "LIBRARY_VERSION",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    api_version = KOTLIN_LANGUAGE_LEVEL,
+    jvm_target = JAVA_LANGUAGE_LEVEL,
+    language_version = KOTLIN_LANGUAGE_LEVEL,
+)
+
+kt_jvm_library(
+    name = "argslib",
+    srcs = glob(["src/main/kotlin/ArgsParser.kt"]),
+)
+
+kt_jvm_test(
+    name = "ArgsParserTest",
+    associates = [ ":argslib" ],
+    test_class = "args.ArgsParserTest",
+    srcs = ["src/test/kotlin/args/ArgsParserTest.kt"],
+    deps = [
+        "@maven//com/google/truth",
+        "@maven//junit",
+    ]
+)
+
+
+maven_pom(
+    name = "argslib_pom",
+    artifact_id = LIBRARY_ARTIFACT_ID,
+    version = LIBRARY_VERSION,
+    target = "//:argslib",
+)
+
+sources_jar(
+    name = "argslib_sources_jar",
+    artifact_id = LIBRARY_ARTIFACT_ID,
+    version = LIBRARY_VERSION,
+    target = "//:argslib",
+)
+
+deployment_jar(
+    name = "argslib_deployment_jar",
+    artifact_id = LIBRARY_ARTIFACT_ID,
+    version = LIBRARY_VERSION,
+    target = "//:argslib",
+)
