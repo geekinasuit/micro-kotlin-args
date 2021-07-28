@@ -3,7 +3,7 @@ The thinnest possible, yet usable, flags/options parser for Kotlin
 
 > code-golf as a service, by Christian Gruber
 
-***Currently running at:** 53 lines of code (excluding license lines)*
+***Currently running at:** 56 lines of code (excluding license lines)*
 
 This library/snippet seeks to be the smallest possible args/flags/options parsing library 
 for Kotlin, dependency free, and suitable for inclusion in kotlin apps or kotlin `.kts`
