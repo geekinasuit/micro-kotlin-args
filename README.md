@@ -82,7 +82,9 @@ Just go to the source page, and cut and paste it in.
 ### Scripting
 
 Get the raw url of the source file, and use in kscript (or another similar system) and
-use `@file:Include(<url_to_source_code>)` in your kotlin script.
+use `@file:Include("https://github.com/geekinasuit/micro-kotlin-args/blob/main/src/main/kotlin/ArgsParser.kt")` in your kotlin script.
+
+Ideally you won't use the main branch at head, but lock in a particular version.
 
 ## Maven Artifact
 
