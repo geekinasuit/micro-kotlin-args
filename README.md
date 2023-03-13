@@ -20,16 +20,21 @@ Some basic features:
    - configuring default values for flags. 
    - configuring opts/flags to be configured from an env var by default
    - super-basic help text support (and `Opt` objects exposed to allow more robust help text)
+   - Multiple options classes using a shared parser (with caveats - they must all
+     be instantiated prior to using `help()` or `validate()`)
 
 Some (current) limitations (compared to other flag parsers) include:
    - No up-front init validation (lazily evaluating the flags)
    - No support for commands
    - flag/option list arguments
    - No negative flags
+   - No lists of paramters to options (`"-files a b c -someFlag"`)
    - No accumulative flags or options (`"-v -v -v"` turns into verbosity=3, for instance)
    - No identifying unknown flags (implementable by calling code as `opts` is exposed.)
-   - Evaluation is lazy, so using the same parser in different options code is 
-     undefined, and could have subtle bugs.
+
+Other caveats
+   - Evaluation is semi-lazy, so using the same parser in different options code has some
+     subtleties. (Can instantiate all options classes and then call validate())
    
 These may never be added or "fixed", as it may not be feasible to impelement them and keep
 under or near the ideal goal of 50 lines of code. Contributions (within these constraints)

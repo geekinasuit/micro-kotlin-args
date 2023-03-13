@@ -6,10 +6,13 @@ import ArgsParser
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import validate
+import java.lang.IllegalArgumentException
+import java.lang.NullPointerException
 
 class ArgsParserTest {
 
-  class Main(val opts: ArgsParser) {
+  class TestOpts(private val opts: ArgsParser) {
     val foo by opts.opt("--foo", "-f", help = "help text")
     val bar by opts.opt("--bar", "-b").default { "defaultBar" }
     val baz by opts.opt("--baz", env = "SOME_RANDOM_ENV_VAR") { it.toInt() }
@@ -20,53 +23,125 @@ class ArgsParserTest {
   }
 
   @Test fun basic() {
-    val main = Main(ArgsParser("--foo", "razzledazzle"))
-    assertThat(main.foo).isEqualTo("razzledazzle")
-    assertThat(main.bar).isEqualTo("defaultBar")
+    val testOpts = TestOpts(ArgsParser("--foo", "razzledazzle"))
+    assertThat(testOpts.foo).isEqualTo("razzledazzle")
+    assertThat(testOpts.bar).isEqualTo("defaultBar")
   }
 
   @Test fun secondary() {
-    val main = Main(ArgsParser("-f", "razzledazzle"))
-    assertThat(main.foo).isEqualTo("razzledazzle")
+    val testOpts = TestOpts(ArgsParser("-f", "razzledazzle"))
+    assertThat(testOpts.foo).isEqualTo("razzledazzle")
   }
 
-  @Test fun ints() {
-    assertThat(Main(ArgsParser("--baz", "4")).baz).isEqualTo(4)
+  @Test fun `type conversion`() {
+    assertThat(TestOpts(ArgsParser("--baz", "4")).baz).isEqualTo(4)
   }
 
   @Test fun flag() {
-    assertThat(Main(ArgsParser("--baz", "4")).flag).isFalse()
-    assertThat(Main(ArgsParser("--baz", "4", "--flag")).flag).isTrue()
+    assertThat(TestOpts(ArgsParser("--baz", "4")).flag).isFalse()
+    assertThat(TestOpts(ArgsParser("--baz", "4", "--flag")).flag).isTrue()
   }
 
   @Test fun env() {
-    assertThat(Main(ArgsParser("--baz", "4")).bin).isEqualTo("src/test/kotlin/args/${ArgsParserTest::class.simpleName}")
-    assertThat(Main(ArgsParser("--baz", "4", "--bin", "bin")).bin).isEqualTo("bin")
+    assertThat(TestOpts(ArgsParser("--baz", "4")).bin)
+      .isEqualTo("src/test/kotlin/args/${ArgsParserTest::class.simpleName}")
+    assertThat(TestOpts(ArgsParser("--baz", "4", "--bin", "bin")).bin).isEqualTo("bin")
   }
 
   @Test fun missingValue() {
-    val main = Main(ArgsParser("--baz"))
-    val e = assertThrows(IllegalStateException::class.java) { val foo = main.baz }
+    val testOpts = TestOpts(ArgsParser("--baz"))
+    val e = assertThrows(IllegalStateException::class.java) { val foo = testOpts.baz }
     assertThat(e).hasMessageThat().isEqualTo("Option --baz has no argument")
   }
 
   @Test fun missingValueWithTrailingFlag() {
-    val main = Main(ArgsParser("--baz", "--flag"))
-    val e = assertThrows(IllegalStateException::class.java) { val foo = main.baz }
+    val testOpts = TestOpts(ArgsParser("--baz", "--flag"))
+    val e = assertThrows(IllegalStateException::class.java) { val foo = testOpts.baz }
     assertThat(e).hasMessageThat().isEqualTo("Option --baz expects a value, but found opt '--flag'")
   }
 
+  @Test fun `multiple options classes`() {
+    val parser = ArgsParser("--foo", "razzledazzle", "--whatever")
+    val testOpts = TestOpts(parser)
+
+    class OtherOpts(val opts: ArgsParser) {
+      val whatever: Boolean by opts.flag("--whatever")
+    }
+    val otherOpts = OtherOpts(parser)
+    assertThat(testOpts.foo).isEqualTo("razzledazzle")
+    assertThat(testOpts.bar).isEqualTo("defaultBar")
+    assertThat(otherOpts.whatever).isTrue()
+  }
+
+  @Test fun `all options registered - no class`() {
+    val argsParser = ArgsParser("--baz", "--flag")
+    assertThat(argsParser.opts).hasSize(0)
+  }
+
+  @Test fun `all options registered - one class`() {
+    val argsParser = ArgsParser("--baz", "--flag")
+    assertThat(argsParser.opts).hasSize(0)
+    TestOpts(argsParser)
+    assertThat(argsParser.opts.keys).hasSize(7)
+    assertThat(argsParser.opts.values.toSet()).hasSize(5)
+  }
+
+  @Test fun `all options registered - multiple classes`() {
+    val argsParser = ArgsParser("--baz", "baz", "--flag")
+    assertThat(argsParser.opts).hasSize(0)
+    TestOpts(argsParser)
+    assertThat(argsParser.opts.keys).hasSize(7)
+    assertThat(argsParser.opts.values.toSet()).hasSize(5)
+    class OtherOpts(opts: ArgsParser) {
+      val whoop by opts.opt("--whoop")
+    }
+    OtherOpts(argsParser) // initialize second class
+    assertThat(argsParser.opts.keys).hasSize(8)
+    assertThat(argsParser.opts.values.toSet()).hasSize(6)
+  }
+
+  @Test fun `overlapping opts classes fail`() {
+    class OtherOpts(opts: ArgsParser) {
+      val baz by opts.opt("--baz")
+    }
+    val parser = ArgsParser() // don't need real args for this test.
+    TestOpts(parser) // initialize first class
+    val e = assertThrows(IllegalArgumentException::class.java) { OtherOpts(parser) }
+    assertThat(e.message).isEqualTo("Multiple definitions of --baz not supported.")
+  }
+
+  @Test fun `validate options - uninitialized`() {
+    val parser = ArgsParser("--baz", "baz", "--flag")
+    val e = assertThrows(IllegalStateException::class.java) { parser.validate() }
+    assertThat(e.message).isEqualTo("ArgsParser has not been used yet, but attempted to validate.")
+  }
+  @Test fun `validate options - missing required`() {
+    val parser = ArgsParser("--baz", "baz", "--flag")
+    assertThat(parser.opts).hasSize(0)
+    TestOpts(parser)
+    val e = assertThrows(IllegalArgumentException::class.java) { parser.validate() }
+    assertThat(e.message).isEqualTo("Missing arguments: --foo, --bin")
+  }
+
+  @Test fun `validate options - unknown`() {
+    val parser = ArgsParser("--baz", "baz", "--whatisthisflag", "-q")
+    assertThat(parser.opts).hasSize(0)
+    TestOpts(parser)
+    val e = assertThrows(IllegalArgumentException::class.java) { parser.validate() }
+    assertThat(e.message).isEqualTo("Unknown arguments: --whatisthisflag, -q")
+  }
+
   @Test fun help() {
-    val main = Main(ArgsParser("--baz"))
-    assertThat(main.help()).isEqualTo(
+    val parser = ArgsParser("--baz").also { TestOpts(it) /* force loading of opt definitions */ }
+    assertThat(parser.help()).isEqualTo(
       """
       Usage 'binary <options and flags> ...'
         --foo, -f
           help text
-        --bar, -b
+        --bar, -b (optional)
         --baz
         --bin
-        --flag
+        --flag (optional)
       """.trimIndent()
     )
   }
