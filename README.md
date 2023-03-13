@@ -57,7 +57,7 @@ default, or by an environment variable via the `env=` parameter (see example bel
 
 For a simple example:
 ```kotlin
-class Config(opts: OptionsParser) {
+class Config(opts: ArgsParser) {
   val foo by opts.opt("--foo", "-f", help="A simple option with a paramter")
   val bar by opts.opt("--bar", "-b", help="An opt with a default value").default { "defaultBar" }
   val baz: Int by opts.opt("--baz", help="An opt's string converted to an Int") { it.toInt() }
@@ -66,7 +66,7 @@ class Config(opts: OptionsParser) {
 }
 
 fun main(vararg args: String) {
-  val config = Config(OptionsParser(args))
+  val config = Config(ArgsParser(args))
   // use config.foo, config.bar, config.baz, etc.
 }
 ```
@@ -81,10 +81,11 @@ Just go to the source page, and cut and paste it in.
 
 ### Scripting
 
-Get the raw url of the source file, and use in kscript (or another similar system) and
-use `@file:Include("https://github.com/geekinasuit/micro-kotlin-args/blob/main/src/main/kotlin/ArgsParser.kt")` in your kotlin script.
+Get the raw url of the source file, and use in kscript (or another similar system) and use
+`@file:Include("https://raw.githubusercontent.com/geekinasuit/micro-kotlin-args/6bbead09df583a61cf98785967093c97b38f40f2/src/main/kotlin/ArgsParser.kt")`
+in your kotlin script.
 
-Ideally you won't use the main branch at head, but lock in a particular version.
+Ideally you should not use the main branch at head, but lock in a particular commit.
 
 ## Maven Artifact
 
