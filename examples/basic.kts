@@ -65,7 +65,6 @@ class ArgsParser(vararg args: String, val binaryName: String = "binary") {
   }
 }
 
-
 val cli = CLI(ArgsParser(*args, binaryName = "basic.kts"))
 try {
   if ("--help" in args) {
