@@ -3,17 +3,16 @@ LIBRARY_VERSION = "HEAD-SNAPSHOT"  # Don't refactor this without altering tools/
 
 # What language compliance levels are we configuring
 JAVA_LANGUAGE_LEVEL = "1.8"
-KOTLIN_LANGUAGE_LEVEL = "1.3"
+KOTLIN_LANGUAGE_LEVEL = "1.7"
 
 # What version of kotlin are we using
-KOTLIN_VERSION = "1.4.32"
-KOTLINC_RELEASE_SHA = "dfef23bb86bd5f36166d4ec1267c8de53b3827c446d54e82322c6b6daad3594c"
-KOTLINC_RELEASE_URL = "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION)
+KOTLIN_VERSION = "1.8.10"
+KOTLINC_RELEASE_SHA = "4c3fa7bc1bb9ef3058a2319d8bcc3b7196079f88e92fdcd8d304a46f4b6b5787"
 
 # what version of the kotlin rules are we using
-KOTLIN_RULES_VERSION = "1.5.0-beta-3"
+KOTLIN_RULES_VERSION = "1.8-RC-1"
 KOTLIN_RULES_FORK = "bazelbuild"
-KOTLIN_RULES_SHA = "58edd86f0f3c5b959c54e656b8e7eb0b0becabd412465c37a2078693c2571f7f"
+KOTLIN_RULES_SHA = "1779628569eb3b0fe97a3fb5c3ed8090e6503e425600b401c7b1afb6b23a3098"
 KOTLIN_RULES_URL = "https://github.com/{fork}/rules_kotlin/releases/download/v{version}/rules_kotlin_release.tgz".format(
     fork = KOTLIN_RULES_FORK,
     version = KOTLIN_RULES_VERSION,

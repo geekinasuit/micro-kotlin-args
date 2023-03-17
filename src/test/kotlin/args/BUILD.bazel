@@ -1,0 +1,13 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+package(default_visibility = ["//:__subpackages__"])
+
+kt_jvm_test(
+    name = "ArgsParserTest",
+    srcs = ["ArgsParserTest.kt"],
+    associates = ["//src/main/kotlin:argslib"],
+    deps = [
+        "@maven//com/google/truth",
+        "@maven//junit",
+    ],
+)

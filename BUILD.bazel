@@ -19,40 +19,23 @@ define_kt_toolchain(
     language_version = KOTLIN_LANGUAGE_LEVEL,
 )
 
-kt_jvm_library(
-    name = "argslib",
-    srcs = glob(["src/main/kotlin/ArgsParser.kt"]),
-)
-
-kt_jvm_test(
-    name = "ArgsParserTest",
-    associates = [ ":argslib" ],
-    test_class = "args.ArgsParserTest",
-    srcs = ["src/test/kotlin/args/ArgsParserTest.kt"],
-    deps = [
-        "@maven//com/google/truth",
-        "@maven//junit",
-    ]
-)
-
-
 maven_pom(
     name = "argslib_pom",
     artifact_id = LIBRARY_ARTIFACT_ID,
     version = LIBRARY_VERSION,
-    target = "//:argslib",
+    target = "//src/main/kotlin:argslib",
 )
 
 sources_jar(
     name = "argslib_sources_jar",
     artifact_id = LIBRARY_ARTIFACT_ID,
     version = LIBRARY_VERSION,
-    target = "//:argslib",
+    target = "//src/main/kotlin:argslib",
 )
 
 deployment_jar(
     name = "argslib_deployment_jar",
     artifact_id = LIBRARY_ARTIFACT_ID,
     version = LIBRARY_VERSION,
-    target = "//:argslib",
+    target = "//src/main/kotlin:argslib",
 )

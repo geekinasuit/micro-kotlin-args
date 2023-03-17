@@ -40,7 +40,7 @@ class ArgsParserTest {
   }
 
   @Test fun env() {
-    assertThat(Main(ArgsParser("--baz", "4")).bin).isEqualTo("./${ArgsParserTest::class.simpleName}")
+    assertThat(Main(ArgsParser("--baz", "4")).bin).isEqualTo("src/test/kotlin/args/${ArgsParserTest::class.simpleName}")
     assertThat(Main(ArgsParser("--baz", "4", "--bin", "bin")).bin).isEqualTo("bin")
   }
 
