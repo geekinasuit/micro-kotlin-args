@@ -32,32 +32,36 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
   private fun putOpt(o: Opt<*>) = o.names.forEach {
     if (opts[it] == null) opts[it] = o else throw IllegalArgumentException("Multiple definitions of $it not supported.")
   }
-  fun opt(vararg names: String, help: String? = null, env: String? = null): Opt<String> {
-    return Opt(this, *names, help = help, env = env) { a -> a }.also(::putOpt)
+  fun opt(vararg names: String, help: String? = null, hidden: Boolean = false, env: String? = null): Opt<String> {
+    return Opt(this, *names, help = help, hidden = hidden, env = env) { a -> a }.also(::putOpt)
   }
-  fun flag(vararg names: String, help: String? = null, env: String? = null): kotlin.properties.ReadOnlyProperty<Any, Boolean> {
-    return object : Opt<Boolean>(this, *names, help = help, env = env, xform = { false }) {
+  fun flag(vararg names: String, help: String? = null, hidden: Boolean = false, env: String? = null): kotlin.properties.ReadOnlyProperty<Any, Boolean> {
+    return object : Opt<Boolean>(this, *names, help = help, hidden = hidden, env = env, xform = { false }) {
       override fun findValue(index: Int): Boolean = index >= 0
     }.also(::putOpt).default { false }
   }
   fun <T : Any> opt(
     vararg names: String,
     help: String? = null,
+    hidden: Boolean = false,
     env: String? = null,
     xform: (String) -> T
   ): Opt<T> {
-    return Opt(this, *names, help = help, env = env, xform = xform).also(::putOpt)
+    return Opt(this, *names, help = help, hidden = hidden, env = env, xform = xform).also(::putOpt)
   }
-  fun help() = "Usage '$name <options and flags> ...'\n" + opts.values.toSet().joinToString("\n") { o ->
-    val optional = if (o.allowMissingFlag) " (optional)" else ""
-    "  ${o.names.joinToString()}${optional}${o.help?.let {"\n    $it"} ?: ""}"
-  }
+  fun help() = "Usage '$name <options and flags> ...'\n" + opts.values.toSet()
+    .filter { !it.hidden }
+    .joinToString("\n") { o ->
+      val optional = if (o.allowMissingFlag) " (optional)" else ""
+      "  ${o.names.joinToString()}${optional}${o.help?.let {"\n    $it"} ?: ""}"
+    }
   open class Opt<T : Any>(
     private val parser: ArgsParser,
     vararg val names: String,
     val help: String?,
     val env: String?,
-    val xform: ((value: String) -> T)
+    val hidden: Boolean,
+    val xform: ((value: String) -> T),
   ) : kotlin.properties.ReadOnlyProperty<Any?, T?> {
     var allowMissingFlag: Boolean = false // so janky, but terse.
     private val value: T? by lazy {
@@ -82,6 +86,7 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
       xform.invoke(parser.args[index + 1])
     } else null
     override fun getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>) = value
+    fun optional(): kotlin.properties.ReadOnlyProperty<Any?, T?> = this.also { allowMissingFlag = true }
     fun default(def: () -> T): kotlin.properties.ReadOnlyProperty<Any, T> =
       object : kotlin.properties.ReadOnlyProperty<Any, T> {
         init { this@Opt.allowMissingFlag = true }

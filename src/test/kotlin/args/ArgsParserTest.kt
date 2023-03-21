@@ -8,7 +8,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 import validate
 import java.lang.IllegalArgumentException
-import java.lang.NullPointerException
 
 class ArgsParserTest {
 
@@ -18,6 +17,8 @@ class ArgsParserTest {
     val baz by opts.opt("--baz", env = "SOME_RANDOM_ENV_VAR") { it.toInt() }
     val bin by opts.opt("--bin", env = "TEST_BINARY")
     val flag by opts.flag("--flag")
+    val hidden by opts.flag("--hidden", hidden = true, env="SOME_HIDDEN_FIELD")
+    val optional by opts.opt("--optional").optional()
 
     fun help() = opts.help()
   }
@@ -48,10 +49,22 @@ class ArgsParserTest {
     assertThat(TestOpts(ArgsParser("--baz", "4", "--bin", "bin")).bin).isEqualTo("bin")
   }
 
+  @Test fun hidden() {
+    // Just to ensure the hidden flag is actually working.
+    assertThat(TestOpts(ArgsParser("--hidden", "4")).hidden).isTrue()
+  }
+
   @Test fun missingValue() {
     val testOpts = TestOpts(ArgsParser("--baz"))
     val e = assertThrows(IllegalStateException::class.java) { val foo = testOpts.baz }
     assertThat(e).hasMessageThat().isEqualTo("Option --baz has no argument")
+  }
+
+  @Test fun `optional avoids missing value error`() {
+    val testOpts = TestOpts(ArgsParser("--optional", "something"))
+    assertThat(testOpts.optional).isNotNull()
+    val testOpts2 = TestOpts(ArgsParser())
+    assertThat(testOpts2.optional).isNull()
   }
 
   @Test fun missingValueWithTrailingFlag() {
@@ -82,22 +95,22 @@ class ArgsParserTest {
     val argsParser = ArgsParser("--baz", "--flag")
     assertThat(argsParser.opts).hasSize(0)
     TestOpts(argsParser)
-    assertThat(argsParser.opts.keys).hasSize(7)
-    assertThat(argsParser.opts.values.toSet()).hasSize(5)
+    assertThat(argsParser.opts.keys).hasSize(9)
+    assertThat(argsParser.opts.values.toSet()).hasSize(7)
   }
 
   @Test fun `all options registered - multiple classes`() {
     val argsParser = ArgsParser("--baz", "baz", "--flag")
     assertThat(argsParser.opts).hasSize(0)
     TestOpts(argsParser)
-    assertThat(argsParser.opts.keys).hasSize(7)
-    assertThat(argsParser.opts.values.toSet()).hasSize(5)
+    assertThat(argsParser.opts.keys).hasSize(9)
+    assertThat(argsParser.opts.values.toSet()).hasSize(7)
     class OtherOpts(opts: ArgsParser) {
       val whoop by opts.opt("--whoop")
     }
     OtherOpts(argsParser) // initialize second class
-    assertThat(argsParser.opts.keys).hasSize(8)
-    assertThat(argsParser.opts.values.toSet()).hasSize(6)
+    assertThat(argsParser.opts.keys).hasSize(10)
+    assertThat(argsParser.opts.values.toSet()).hasSize(8)
   }
 
   @Test fun `overlapping opts classes fail`() {
@@ -142,6 +155,7 @@ class ArgsParserTest {
         --baz
         --bin
         --flag (optional)
+        --optional (optional)
       """.trimIndent()
     )
   }
