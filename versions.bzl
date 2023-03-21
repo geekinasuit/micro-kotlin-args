@@ -1,5 +1,5 @@
 LIBRARY_ARTIFACT_ID = "micro-kotlin-args"
-LIBRARY_VERSION = "HEAD-SNAPSHOT"  # Don't refactor this without altering tools/deploy.kts
+LIBRARY_VERSION = "0.3"  # Don't refactor this without altering tools/deploy.kts
 
 # What language compliance levels are we configuring
 JAVA_LANGUAGE_LEVEL = "1.8"
