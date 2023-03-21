@@ -56,7 +56,7 @@ def _generate_pom_rule_impl(ctx):
     return [DefaultInfo(files = depset([out]))]
 
 def _generate_sources_jar_impl(ctx):
-    filename = "%s-%s-sources.pom" % (ctx.attr.artifact_id, ctx.attr.version)
+    filename = "%s-%s-sources.jar" % (ctx.attr.artifact_id, ctx.attr.version)
     out = ctx.actions.declare_file(filename)
     target = ctx.attr.target
     source_jar = target[JavaInfo].source_jars[0]
