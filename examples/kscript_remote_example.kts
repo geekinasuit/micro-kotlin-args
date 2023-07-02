@@ -1,6 +1,6 @@
 #!/usr/bin/env kscript
 
-@file:Include("https://raw.githubusercontent.com/geekinasuit/micro-kotlin-args/v0.0.1/src/main/kotlin/ArgsParser.kt")
+@file:Import("https://raw.githubusercontent.com/geekinasuit/micro-kotlin-args/v0.0.1/src/main/kotlin/ArgsParser.kt")
 
 import java.lang.RuntimeException
 import kotlin.system.exitProcess
@@ -10,7 +10,7 @@ class CLI(val args: ArgsParser) {
   val bar by args.opt("-b", help = "expecting lots of that B.")
 }
 
-val cli = CLI(ArgsParser(*args, binaryName = "basic.kts"))
+val cli = CLI(ArgsParser(*args, name = "basic.kts"))
 try {
   if ("--help" in args) {
     println(cli.args.help())

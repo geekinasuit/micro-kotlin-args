@@ -8,10 +8,10 @@ import java.lang.IllegalArgumentException
  * a value, or flags, which are of the same form, but do not contain any extra value - they merely flip a boolean to
  * true if present.  This is intended to be an extremely thin, minimalist, code-golf-small args parser which can be
  * conveniently copied into kotlin scripts, imported into kscripts, or pulled in as a maven dependency. It will never
- * be fully featured, so as to accomdiate this minimalist goal, but it has a fair number of features.
+ * be fully featured, to accommodate this minimalist goal, but it has a fair number of features.
  *
  * One ArgsParser instance should be created for every options-class, as the parser is stateful, and responds to the
- * property delegation operaitons that happen on options-class construction. The "args" array can of course be reused,
+ * property delegation operations that happen on options-class construction. The "args" array can of course be reused,
  * but ArgsParser instances should not be.
  *
  * Usage:
@@ -40,6 +40,13 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
       override fun findValue(index: Int): Boolean = index >= 0
     }.also(::putOpt).default { false }
   }
+  fun <T: Any> enumerated(vararg pairs: Pair<String, T>, help: String): Opt<T> =
+    pairs.toMap().let { map ->
+      object : Opt<T>(this@ArgsParser, *map.keys.toTypedArray(), help = help, hidden = false, env = null, xform = { map[it]!! }) {
+        override fun findValue(index: Int) = if (index >= 0) xform.invoke(parser.args[index]) else null
+      }.also(::putOpt)
+    }
+
   fun <T : Any> opt(
     vararg names: String,
     help: String? = null,
@@ -53,29 +60,32 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
     .filter { !it.hidden }
     .joinToString("\n") { o ->
       val optional = if (o.allowMissingFlag) " (optional)" else ""
-      "  ${o.names.joinToString()}${optional}${o.help?.let {"\n    $it"} ?: ""}"
+      "  ${o.helpNames}${optional}${o.help?.let {"\n    $it"} ?: ""}"
     }
   open class Opt<T : Any>(
-    private val parser: ArgsParser,
+    protected val parser: ArgsParser,
     vararg val names: String,
     val help: String?,
     val env: String?,
     val hidden: Boolean,
     val xform: ((value: String) -> T),
   ) : kotlin.properties.ReadOnlyProperty<Any?, T?> {
+    open val helpNames = names.joinToString()
     var allowMissingFlag: Boolean = false // so janky, but terse.
     private val value: T? by lazy {
-      val index = parser.args.indexOfFirst { it in names }
+      val indices = parser.args.mapIndexedNotNull{ index, elem -> index.takeIf{ elem in names } }
+      if (indices.size > 1) throw java.lang.IllegalStateException("Only one of $helpNames should appear in the args")
+      val index = indices.firstOrNull() ?: -1
       when {
         index >= 0 -> findValue(index) // found the flag
         env != null && System.getenv(env) != null -> xform.invoke(System.getenv(env))
         allowMissingFlag -> findValue(index)
         parser.exit -> {
-          println("Could not find flag ${names.toList()} in args.")
+          println("Could not find $helpNames in args.")
           println(parser.help())
           kotlin.system.exitProcess(1)
         }
-        else -> throw kotlin.IllegalStateException("Could not find flag ${names.toList()} in args.")
+        else -> throw kotlin.IllegalStateException("Could not find $helpNames in args")
       }
     }
     protected open fun findValue(index: Int) = if (index >= 0) {
@@ -103,7 +113,7 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
  * will ever be used for. If the ArgsParser is used for only a subset of args, then up-front validation is not possible,
  * and this API should not be called.
  *
- * It is built separately so as to make it easier to cut-and-paste the basic ArgsParser into scripts, if desired.
+ * It is built separately to make it easier to cut-and-paste the basic ArgsParser into scripts, if desired.
  */
 fun ArgsParser.validate() {
   if (this.opts.isEmpty()) throw IllegalStateException("ArgsParser has not been used yet, but attempted to validate.")

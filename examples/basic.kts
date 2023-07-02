@@ -1,5 +1,9 @@
 #!/usr/bin/env kotlinc -script --
 
+// A usage where the whole ArgsParser is copypasta'ed into the code. Suitable for situations
+// where you can't include/concatenate scripts to include the parser from a separate file (or
+// use maven-style deps)
+
 import java.lang.RuntimeException
 import kotlin.system.exitProcess
 

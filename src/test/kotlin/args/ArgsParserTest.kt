@@ -11,6 +11,7 @@ import java.lang.IllegalArgumentException
 
 class ArgsParserTest {
 
+  enum class ArgsEnum { FIRST, SECOND, THIRD }
   class TestOpts(private val opts: ArgsParser) {
     val foo by opts.opt("--foo", "-f", help = "help text")
     val bar by opts.opt("--bar", "-b").default { "defaultBar" }
@@ -49,9 +50,79 @@ class ArgsParserTest {
     assertThat(TestOpts(ArgsParser("--baz", "4", "--bin", "bin")).bin).isEqualTo("bin")
   }
 
+  @Test fun enumeratedValues() {
+    class EnumOptions(private val opts: ArgsParser) {
+      val required by opts.enumerated(
+          "--required1" to ArgsEnum.FIRST,
+          "--required2" to ArgsEnum.SECOND,
+          "--required3" to ArgsEnum.THIRD,
+          help = "required enum values"
+      )
+      val optional by opts.enumerated(
+          "--optional1" to ArgsEnum.FIRST,
+          "--optional2" to ArgsEnum.SECOND,
+          "--optional3" to ArgsEnum.THIRD,
+          help = "optional enum values"
+      ).optional()
+      val defaulted by opts.enumerated(
+          "--defaulted1" to ArgsEnum.FIRST,
+          "--defaulted2" to ArgsEnum.SECOND,
+          "--defaulted3" to ArgsEnum.THIRD,
+          help = "enum values with a default enum values"
+      ).default { ArgsEnum.SECOND }
+    }
+
+    // test required values
+    assertThat(EnumOptions(ArgsParser("--required1")).required).isEqualTo(ArgsEnum.FIRST)
+    assertThat(EnumOptions(ArgsParser("--required2")).required).isEqualTo(ArgsEnum.SECOND)
+    assertThat(EnumOptions(ArgsParser("--required3")).required).isEqualTo(ArgsEnum.THIRD)
+
+    // Test optional values (--required1 there to satisfy... the requirement)
+    assertThat(EnumOptions(ArgsParser("--required1")).optional).isNull()
+    assertThat(EnumOptions(ArgsParser("--required1", "--optional1")).optional).isEqualTo(ArgsEnum.FIRST)
+    assertThat(EnumOptions(ArgsParser("--required1", "--optional2")).optional).isEqualTo(ArgsEnum.SECOND)
+    assertThat(EnumOptions(ArgsParser("--required1", "--optional3")).optional).isEqualTo(ArgsEnum.THIRD)
+
+    // test defaulted values
+    assertThat(EnumOptions(ArgsParser("--required1")).defaulted).isEqualTo(ArgsEnum.SECOND)
+    assertThat(EnumOptions(ArgsParser("--required1", "--defaulted1")).defaulted).isEqualTo(ArgsEnum.FIRST)
+    assertThat(EnumOptions(ArgsParser("--required1", "--defaulted2")).defaulted).isEqualTo(ArgsEnum.SECOND)
+    assertThat(EnumOptions(ArgsParser("--required1", "--defaulted3")).defaulted).isEqualTo(ArgsEnum.THIRD)
+
+    // test overlapping mapped values
+    val e = assertThrows(java.lang.IllegalStateException::class.java) {
+      EnumOptions(ArgsParser("--required1", "--required2")).required
+    }
+    assertThat(e.message).isEqualTo("Only one of --required1, --required2, --required3 should appear in the args")
+
+    // test missing
+    val e2 = assertThrows(java.lang.IllegalStateException::class.java) { EnumOptions(ArgsParser()).required }
+    assertThat(e2.message).isEqualTo("Could not find --required1, --required2, --required3 in args")
+
+    // test help
+    val parser = ArgsParser(name = "myapp").also { EnumOptions(it) /* force loading of opt definitions */ }
+    assertThat(parser.help()).isEqualTo(
+        """
+      Usage 'myapp <options and flags> ...'
+        --required1, --required2, --required3
+          required enum values
+        --optional1, --optional2, --optional3 (optional)
+          optional enum values
+        --defaulted1, --defaulted2, --defaulted3 (optional)
+          enum values with a default enum values
+      """.trimIndent()
+    )
+  }
+
   @Test fun hidden() {
     // Just to ensure the hidden flag is actually working.
     assertThat(TestOpts(ArgsParser("--hidden", "4")).hidden).isTrue()
+  }
+
+  @Test fun missinOption() {
+    val testOpts = TestOpts(ArgsParser())
+    val e = assertThrows(IllegalStateException::class.java) { val foo = testOpts.foo }
+    assertThat(e).hasMessageThat().isEqualTo("Could not find --foo, -f in args")
   }
 
   @Test fun missingValue() {
@@ -145,10 +216,10 @@ class ArgsParserTest {
   }
 
   @Test fun help() {
-    val parser = ArgsParser("--baz").also { TestOpts(it) /* force loading of opt definitions */ }
+    val parser = ArgsParser("--baz", name = "myapp").also { TestOpts(it) /* force loading of opt definitions */ }
     assertThat(parser.help()).isEqualTo(
       """
-      Usage 'binary <options and flags> ...'
+      Usage 'myapp <options and flags> ...'
         --foo, -f
           help text
         --bar, -b (optional)
