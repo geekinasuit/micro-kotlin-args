@@ -33,9 +33,9 @@ class Main(vararg args: String) {
     private val branch by parser.opt(env = "GITHUB_BASE_REF", help = "Branch name override")
         .default { "git branch --show-current".execute().stdout }
 
-    private val verbose by parser.flag("-v", "-verbose")
-    private val username by parser.opt(hidden = true, env = "CI_DEPLOY_USERNAME").optional()
-    private val password by parser.opt(hidden = true, env = "CI_DEPLOY_PASSWORD").optional()
+    private val verbose by parser.flag("-v", "--verbose")
+    private val username by parser.opt("--username", env = "CI_DEPLOY_USERNAME").optional()
+    private val password by parser.opt("--password", env = "CI_DEPLOY_PASSWORD").optional()
 
     private val bazel: String by lazy { "bazel".which() }
 
@@ -68,12 +68,13 @@ class Main(vararg args: String) {
 
         val mvn_goal = key?.let { "gpg:sign-and-deploy-file" } ?: "deploy:deploy-file"
         val key_flag = key?.let { " -Dgpg.keyname=$it" } ?: ""
-        val settings_file = if (repo != Repo.FakeLocalRepo) " -gs tools/release/settings.xml" else ""
-        val debug_flag = if (verbose) " --debug" else ""
+        val settings_file = if (repo != Repo.FakeLocalRepo) " -gs settings.xml" else ""
+        val debug_flag = if (verbose) " --debug -X" else ""
         val javadoc_flag = if (!snapshotVersion) " -Djavadoc=$javadoc_file" else ""
         val mvn_cmd = "mvn $mvn_goal" +
                 settings_file +
                 debug_flag +
+                " -Dmaven.resolver.transport=wagon" +
                 " -Dfile=$artifact_file" +
                 " -DpomFile=$pom_file" +
                 " -Dsources=$sources_file" +
@@ -100,12 +101,13 @@ class Main(vararg args: String) {
                         }
                     }
                 }
+                println("Executing: ${command().joinToString(" ")}")
             }
             .execute(timeout = 300)
     }
 
     private fun help(code: Int, message: (() -> String)? = null): Nothing {
-        message?.let { println(it) }
+        message?.let { println(it()) }
         println(parser.help())
         exitProcess(code)
     }
@@ -119,16 +121,18 @@ fun exit(code: Int, message: () -> String): Nothing {
 sealed class Repo(val id: String, val url: String) {
     object SonatypeSnapshots : Repo(
         "sonatype-nexus-snapshots",
-        "https://oss.sonatype.org/content/repositories/snapshots"
+        "https://s01.oss.sonatype.org/content/repositories/snapshots"
     )
     object SonatypeStaging : Repo(
         "sonatype-nexus-staging",
-        "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+        "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
     )
     object FakeLocalRepo : Repo(
         "local-fake",
         "file:///tmp/fakerepo"
     )
+
+    override fun toString(): String = "Repo[id=$id, url=$url]"
 }
 
 fun String.execAndFilterSuffix(suffix: String) =

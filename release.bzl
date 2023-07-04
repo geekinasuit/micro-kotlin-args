@@ -4,7 +4,7 @@ POM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.geekinsuit.micro</groupId>
+  <groupId>com.geekinasuit.micro</groupId>
   <artifactId>micro-kotlin-args</artifactId>
   <version>{version}</version>
   <name>Micro Kotlin Args</name>
