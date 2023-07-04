@@ -60,7 +60,8 @@ class ArgsParser(vararg args: String, val name: String = "binary", val exit: Boo
     .filter { !it.hidden }
     .joinToString("\n") { o ->
       val optional = if (o.allowMissingFlag) " (optional)" else ""
-      "  ${o.helpNames}${optional}${o.help?.let {"\n    $it"} ?: ""}"
+      val env = o.env?.let { " [env-var: $it]" } ?: ""
+      "  ${o.helpNames}${env}${optional}${o.help?.let {"\n    $it"} ?: ""}"
     }
   open class Opt<T : Any>(
     protected val parser: ArgsParser,
