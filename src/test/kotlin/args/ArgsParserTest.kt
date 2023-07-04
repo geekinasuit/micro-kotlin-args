@@ -223,8 +223,8 @@ class ArgsParserTest {
         --foo, -f
           help text
         --bar, -b (optional)
-        --baz
-        --bin
+        --baz [env-var: SOME_RANDOM_ENV_VAR]
+        --bin [env-var: TEST_BINARY]
         --flag (optional)
         --optional (optional)
       """.trimIndent()
