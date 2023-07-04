@@ -1,13 +1,12 @@
 #!/usr/bin/env kscript
 
-@file:Import("../src/main/kotlin/ArgsParser.kt")
+@file:DependsOn("com.geekinasuit.micro:micro-kotlin-args:0.3")
 
 import java.lang.RuntimeException
 import kotlin.system.exitProcess
 
 class CLI(val args: ArgsParser) {
-  val foo by args.flag("--foo", help = "It's a foo, whaddya want?!") { toInt() }
-
+  val foo by args.flag("--foo", help = "It's a foo, whaddya want?!")
   val bar by args.opt("-b", help = "expecting lots of that B.")
 }
 
@@ -17,7 +16,7 @@ try {
     println(cli.args.help())
     exitProcess(0)
   }
-  println("FOO: ${cli.foo * 2}")
+  println("FOO: ${cli.foo}")
   println("BAR: ${cli.bar}")
 
 } catch (e: RuntimeException) {

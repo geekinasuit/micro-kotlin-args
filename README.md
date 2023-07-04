@@ -3,7 +3,7 @@ The thinnest possible, yet usable, flags/options parser for Kotlin
 
 > code-golf as a service, by Christian Gruber
 
-***Currently running at:** under 80 lines of code (excluding license and comment lines)*
+***Currently running at:** under 90 lines of code (excluding license and comment lines)*
 
 This library/snippet seeks to be the smallest possible args/flags/options parsing library 
 for Kotlin, dependency free, and suitable for inclusion in kotlin apps or kotlin `.kts`
@@ -16,26 +16,28 @@ debug as other libraries.
 Some basic features:
    - parsing `--foo value` style options
    - parsing `--myflag` style single flags
+   - mapping multiple values (e.g. enums) to flags
    - transformation lambdas for altering flag values and types
    - configuring default values for flags. 
+   - optional (nullable) flags
    - configuring opts/flags to be configured from an env var by default
    - super-basic help text support (and `Opt` objects exposed to allow more robust help text)
    - Multiple options classes using a shared parser (with caveats - they must all
      be instantiated prior to using `help()` or `validate()`)
+   - `parser.validate()` to force early evaluation of the args (defaults to lazy evaluation)
+     - Also reports unknown/undeclared flags
 
 Some (current) limitations (compared to other flag parsers) include:
-   - No up-front init validation (lazily evaluating the flags)
    - No support for commands
-   - flag/option list arguments
-   - No negative flags
+   - positional parameters
+   - No negative flags (i.e. --no-foo to invert the value of foo)
    - No lists of paramters to options (`"-files a b c -someFlag"`)
    - No accumulative flags or options (`"-v -v -v"` turns into verbosity=3, for instance)
-   - No identifying unknown flags (implementable by calling code as `opts` is exposed.)
 
 Other caveats
    - Evaluation is semi-lazy, so using the same parser in different options code has some
      subtleties. (Can instantiate all options classes and then call validate())
-   
+
 These may never be added or "fixed", as it may not be feasible to impelement them and keep
 under or near the ideal goal of 50 lines of code. Contributions (within these constraints)
 welcome. Especially contributions which shorten the code without sacrificing functionality.
@@ -86,16 +88,19 @@ Just go to the source page, and cut and paste it in.
 
 ### Scripting
 
-Get the raw url of the source file, and use in kscript (or another similar system) and use
-`@file:Include("https://raw.githubusercontent.com/geekinasuit/micro-kotlin-args/6bbead09df583a61cf98785967093c97b38f40f2/src/main/kotlin/ArgsParser.kt")`
-in your kotlin script.
-
+Get the raw url of the source file, and use in kscript (or another similar system) and put this
+in your kotlin script:
+```kotlin
+@file:Import("https://raw.githubusercontent.com/geekinasuit/micro-kotlin-args/6bbead09df583a61cf98785967093c97b38f40f2/src/main/kotlin/ArgsParser.kt")
+```
 Ideally you should not use the main branch at head, but lock in a particular commit.
 
 ## Maven Artifact
 
-TBD
-
+Using kscript or some other scripting engine that supports DependsOn annotations:
+```kotlin
+@file:DependsOn("com.geekinasuit.micro:micro-kotlin-args:<version>")
+```
 ## License
 
 Copyright (c) 2021, Christian Gruber, All Rights Reserved.
